@@ -1,0 +1,1343 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>three.js webgl - STL</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				font-family: Monospace;
+				background-color: #000000;
+				margin: 0px;
+				overflow: hidden;
+			}
+
+			#info {
+				color: #fff;
+				position: absolute;
+				top: 10px;
+				width: 100%;
+				text-align: center;
+				z-index: 100;
+				display:block;
+
+			}
+
+			a { color: skyblue }
+			.button { background:#999; color:#eee; padding:0.2em 0.5em; cursor:pointer }
+			.highlight { background:orange; color:#fff; }
+
+			span {
+				display: inline-block;
+				width: 60px;
+				float: left;
+				text-align: center;
+			}
+
+		</style>
+	</head>
+	<body>
+		<div id="info">
+			<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> -
+			STL loader test by <a href="https://github.com/aleeper">aleeper</a>. PR2 head from <a href="http://www.ros.org/wiki/pr2_description">www.ros.org</a>
+		</div>
+
+		<script src="./build/three.js"></script>
+		<script src="./examples/js/libs/dat.gui.min.js"></script>
+		<script src="./examples/js/loaders/STLLoader.js"></script>
+		<script src="./examples/js/OrbitControls.js"></script>
+		<script src="./examples/js/Detector.js"></script>
+		<script src="./examples/js/libs/stats.min.js"></script>
+
+		<script>
+
+			if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
+
+			var container, stats;
+			var gui = new dat.GUI();
+			var camera, cameraTarget, scene, renderer;
+			var loader = new THREE.STLLoader();
+			var wallStat;
+			var rfStat;
+			var propsLocal = {
+				wallStat : false,
+				rfStat : false
+			};
+			var wallTrans;
+			var rfTrans;
+			var folderLocal;
+			var allWall = [];
+			var allRF = [];
+
+
+			init();
+			animate();
+
+			function init() {
+
+				container = document.createElement( 'div' );
+				document.body.appendChild( container );
+
+				camera = new THREE.PerspectiveCamera( 35, window.innerWidth / window.innerHeight, 1, 15 );
+				camera.position.set( 3, 1.3, 3 );
+
+				cameraTarget = new THREE.Vector3( 0, -0.25, 0 );
+
+				scene = new THREE.Scene();
+				scene.background = new THREE.Color( 0x0099cc );
+				scene.fog = new THREE.Fog( 0x0099cc, 2, 15 );
+
+
+				// Ground
+
+				var plane = new THREE.Mesh(
+					new THREE.PlaneBufferGeometry( 40, 40 ),
+					// new THREE.MeshPhongMaterial( { color: 0x2299ff, specular: 0x101010 } )
+					new THREE.MeshPhongMaterial( { color: 0xcccccc, specular: 0x101010 } )
+				);
+				plane.rotation.x = -Math.PI/2;
+				plane.position.y = -0.5;
+				scene.add( plane );
+
+				plane.receiveShadow = true;
+
+
+
+
+
+				rect();
+				wall();
+				rfloor();
+				prfloor();
+				pac();
+				pedestal();
+				racks();
+				battery();
+				door();
+				doorknob();
+				doorglass();
+				doorlist();
+				smoke();
+				// pipe();
+				ats();
+				atsframe();
+				atsglass();
+				atsText();
+				pipefm200();
+				fm200Text();
+				genset();
+				gensetText();
+				ramp();
+				doorframe();
+				acpdb1();
+				acpdb2();
+				foldingdoor();
+				partition();
+				pacText();
+				acpdbText();
+				signage();
+				signageback();
+				signageglass();
+				signageText();
+				switchx();
+				abort1();
+				release1();
+				controllerx();
+				siren1();
+				siren2();
+
+
+				setupGui();
+
+				// ASCII file
+
+
+				// loader.load( './examples/models/stl/ascii/slotted_disk.stl', function ( geometry ) {
+				//
+				// 	var material = new THREE.MeshPhongMaterial( { color: 0xff5533, specular: 0x111111, shininess: 200 } );
+				// 	var mesh = new THREE.Mesh( geometry, material );
+				//
+				// 	mesh.position.set( 0, - 0.25, 0.6 );
+				// 	mesh.rotation.set( -Math.PI / 2, 0, 0 );
+				// 	mesh.scale.set( 0.5, 0.5, 0.5 );
+				//
+				// 	mesh.castShadow = true;
+				// 	mesh.receiveShadow = true;
+				//
+				// 	scene.add( mesh );
+				//
+				// } );
+
+
+
+
+				// Binary files
+
+				// var material = new THREE.MeshPhongMaterial( { color: 0x212f39, specular: 0x111111, shininess: 200 } );
+
+
+
+
+
+
+
+				// Lights
+
+				scene.add( new THREE.HemisphereLight( 0x333333, 0x333333 ) );
+
+				addShadowedLight( 1, 1, 1, 0xffffff, 1.35 );
+				addShadowedLight( 0.5, 1, -1, 0xffffff, 1 );
+				// renderer
+
+				renderer = new THREE.WebGLRenderer( { antialias: true } );
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+
+				renderer.gammaInput = true;
+				renderer.gammaOutput = true;
+
+				renderer.shadowMap.enabled = true;
+
+				container.appendChild( renderer.domElement );
+
+				// stats
+
+				stats = new Stats();
+				container.appendChild( stats.dom );
+
+				//
+
+				window.addEventListener( 'resize', onWindowResize, false );
+				controls = new THREE.OrbitControls(camera, renderer.domElement);
+
+			}
+
+			// function hvac1()	{
+			// 	loader.load( './examples/models/stl/tekno/teknopart1/hvac.stl', function ( geometry ) {
+			// 		if (propsLocal.hvacColor1 == false)	{
+			// 			color1 = 0xFF0000;
+			// 		}
+			// 		else {
+			// 			color1 = 0x00FF00;
+			// 		}
+			// 		var meshMaterial = material;
+			// 		//if (geometry.hasColors) {
+			// 		meshMaterial = new THREE.MeshPhongMaterial({ color: color1});
+			// 		//}
+			//
+			// 		var mesh = new THREE.Mesh( geometry, meshMaterial );
+			// 		//mesh.position.set( -0.15,0.05,-0.105 );
+			// 		mesh.position.set( 0.58,0.05,-0.135 );
+			// 		mesh.rotation.set( -Math.PI / 2, 0, -Math.PI / 2 );
+			// 		mesh.scale.set( 0.004,0.004,0.004 );
+			//
+			// 		mesh.castShadow = true;
+			// 		mesh.receiveShadow = true;
+			// 		removeHVAC(mesh);
+			//
+			// 		scene.add( mesh );
+			//
+			// 	} );
+			// }
+
+			function setupGui() {
+				folderLocal = gui.addFolder( 'Show / Hide' );
+				folderLocal.add( propsLocal, 'wallStat' ).name('WALL').onChange( wall );
+				folderLocal.add( propsLocal, 'rfStat' ).name('RAISED FLOOR').onChange( rfloor );
+			}
+
+			function removeWall(xx) {
+				allWall.push(xx);
+				for (i=0; i<allWall.length; i++)	{
+					scene.remove(allWall[i]);
+				}
+			}
+
+			function removeRF(xx) {
+				allRF.push(xx);
+				for (i=0; i<allRF.length; i++)	{
+					scene.remove(allRF[i]);
+				}
+			}
+			// function removeEntity(objectx) {
+			//     var selectedObject = scene.getObjectByName(objectx.name);
+			//     scene.remove( selectedObject );
+			//     animate();
+			// }
+
+
+			function rect()	{
+				loader.load( './examples/models/stl/tekno/datacenter2/rect.stl', function ( geometry ) {
+					var material = new THREE.MeshPhongMaterial( { color: 0x212f39, specular: 0x000000, shininess: 200 } );
+
+					var mesh = new THREE.Mesh( geometry, material );
+
+					mesh.position.set( -1.5,-0.535,1.1 );
+					mesh.rotation.set( - Math.PI / 2, 0, 0 );
+					mesh.scale.set( 0.0003,0.0003,0.0003 );
+
+					mesh.castShadow = true;
+					mesh.receiveShadow = true;
+
+					scene.add( mesh );
+
+				} );
+			}
+
+			function wall()	{
+				loader.load( './examples/models/stl/tekno/datacenter2/wall.stl', function ( geometry ) {
+					if (propsLocal.wallStat == false)	{
+						wallTrans = false;
+					}
+					else {
+						wallTrans = true;
+					}
+					// console.log(mesh);
+					var material = new THREE.MeshPhongMaterial( { color: 0xffffff, specular: 0x111111, shininess: 200, opacity: 0.4, transparent: wallTrans} );
+					// var material = new THREE.MeshPhongMaterial( { color: wallTrans, specular: 0x111111, shininess: 200, opacity: 0.4, transparent: true} );
+					var mesh = new THREE.Mesh( geometry, material );
+
+					mesh.position.set( -1.5,-0.535,1.1 );
+					mesh.rotation.set( - Math.PI / 2, 0, 0 );
+					mesh.scale.set( 0.0003,0.0003,0.0003 );
+
+					mesh.castShadow = true;
+					mesh.receiveShadow = true;
+					removeWall(mesh);
+					// allObject.push(mesh);
+					scene.add( mesh );
+					// console.log(propsLocal.wallStat);
+					// console.log(wallTrans);
+
+				} );
+			}
+
+			function rfloor()	{
+				loader.load( './examples/models/stl/tekno/datacenter2/raisedfloor2.stl', function ( geometry ) {
+					if (propsLocal.rfStat == false)	{
+						rfTrans = false;
+					}
+					else {
+						rfTrans = true;
+					}
+					var material = new THREE.MeshPhongMaterial( { color: 0xcccccc, specular: 0x111111, shininess: 200, opacity: 0.4, transparent: rfTrans} );
+
+					// var meshMaterial = material;
+					// if (geometry.hasColors) {
+					// 	meshMaterial = new THREE.MeshPhongMaterial({ opacity: geometry.alpha, vertexColors: THREE.VertexColors });
+					// }
+
+					var mesh = new THREE.Mesh( geometry, material );
+
+					mesh.position.set( -1.5,-0.535,1.1 );
+					mesh.rotation.set( - Math.PI / 2, 0, 0 );
+					mesh.scale.set( 0.0003,0.0003,0.0003 );
+
+					mesh.castShadow = true;
+					mesh.receiveShadow = true;
+					removeRF(mesh);
+
+					scene.add( mesh );
+
+				} );
+			}
+
+			function prfloor()	{
+				loader.load( './examples/models/stl/tekno/datacenter2/perforatedraisedfloor2.stl', function ( geometry ) {
+					var material = new THREE.MeshPhongMaterial( { color: 0x777700, specular: 0x111111, shininess: 200 } );
+
+					var meshMaterial = material;
+					if (geometry.hasColors) {
+						meshMaterial = new THREE.MeshPhongMaterial({ opacity: geometry.alpha, vertexColors: THREE.VertexColors });
+					}
+
+					var mesh = new THREE.Mesh( geometry, meshMaterial );
+
+					mesh.position.set( -1.5,-0.535,1.1 );
+					mesh.rotation.set( - Math.PI / 2, 0, 0 );
+					mesh.scale.set( 0.0003,0.0003,0.0003 );
+
+					mesh.castShadow = true;
+					mesh.receiveShadow = true;
+					// removeRF(mesh);
+
+					scene.add( mesh );
+
+				} );
+			}
+
+			function racks()	{
+				loader.load( './examples/models/stl/tekno/datacenter2/racks2.stl', function ( geometry ) {
+					var material = new THREE.MeshPhongMaterial( { color: 0x212f39, specular: 0x111111, shininess: 200 } );
+
+					var meshMaterial = material;
+					if (geometry.hasColors) {
+						meshMaterial = new THREE.MeshPhongMaterial({ opacity: geometry.alpha, vertexColors: THREE.VertexColors });
+					}
+
+					var mesh = new THREE.Mesh( geometry, meshMaterial );
+
+					mesh.position.set( -1.5,-0.535,1.1 );
+					mesh.rotation.set( - Math.PI / 2, 0, 0 );
+					mesh.scale.set( 0.0003,0.0003,0.0003 );
+
+					mesh.castShadow = true;
+					mesh.receiveShadow = true;
+
+					scene.add( mesh );
+
+				} );
+			}
+
+			function battery()	{
+				loader.load( './examples/models/stl/tekno/datacenter2/battery2.stl', function ( geometry ) {
+					var material = new THREE.MeshPhongMaterial( { color: 0x444499, specular: 0x111111, shininess: 200 } );
+
+					var meshMaterial = material;
+					if (geometry.hasColors) {
+						meshMaterial = new THREE.MeshPhongMaterial({ opacity: geometry.alpha, vertexColors: THREE.VertexColors });
+					}
+
+					var mesh = new THREE.Mesh( geometry, meshMaterial );
+
+					mesh.position.set( -1.5,-0.535,1.1 );
+					mesh.rotation.set( - Math.PI / 2, 0, 0 );
+					mesh.scale.set( 0.0003,0.0003,0.0003 );
+
+					mesh.castShadow = true;
+					mesh.receiveShadow = true;
+
+					scene.add( mesh );
+
+				} );
+			}
+
+			function pedestal()	{
+				loader.load( './examples/models/stl/tekno/datacenter2/pedestal.stl', function ( geometry ) {
+					var material = new THREE.MeshPhongMaterial( { color: 0x212f39, specular: 0x111111, shininess: 200 } );
+
+					var meshMaterial = material;
+					if (geometry.hasColors) {
+						meshMaterial = new THREE.MeshPhongMaterial({ opacity: geometry.alpha, vertexColors: THREE.VertexColors });
+					}
+
+					var mesh = new THREE.Mesh( geometry, meshMaterial );
+
+					mesh.position.set( -1.5,-0.535,1.1 );
+					mesh.rotation.set( - Math.PI / 2, 0, 0 );
+					mesh.scale.set( 0.0003,0.0003,0.0003 );
+
+					mesh.castShadow = true;
+					mesh.receiveShadow = true;
+
+					scene.add( mesh );
+
+				} );
+			}
+
+			function pac()	{
+				loader.load( './examples/models/stl/tekno/datacenter2/pac.stl', function ( geometry ) {
+					var material = new THREE.MeshPhongMaterial( { color: 0xaa6644, specular: 0x101010, shininess: 200 } );
+
+					var meshMaterial = material;
+					if (geometry.hasColors) {
+						meshMaterial = new THREE.MeshPhongMaterial({ opacity: geometry.alpha, vertexColors: THREE.VertexColors });
+					}
+
+					var mesh = new THREE.Mesh( geometry, meshMaterial );
+
+					mesh.position.set( -1.5,-0.535,1.1 );
+					mesh.rotation.set( - Math.PI / 2, 0, 0 );
+					mesh.scale.set( 0.0003,0.0003,0.0003 );
+
+					mesh.castShadow = true;
+					mesh.receiveShadow = true;
+
+					scene.add( mesh );
+
+				} );
+			}
+
+			function ramp()	{
+				loader.load( './examples/models/stl/tekno/datacenter2/ramp.stl', function ( geometry ) {
+					var material = new THREE.MeshPhongMaterial( { color: 0xffffff, specular: 0x101010, shininess: 200 } );
+
+					var meshMaterial = material;
+					if (geometry.hasColors) {
+						meshMaterial = new THREE.MeshPhongMaterial({ opacity: geometry.alpha, vertexColors: THREE.VertexColors });
+					}
+
+					var mesh = new THREE.Mesh( geometry, meshMaterial );
+
+					mesh.position.set( -1.5,-0.535,1.1 );
+					mesh.rotation.set( - Math.PI / 2, 0, 0 );
+					mesh.scale.set( 0.0003,0.0003,0.0003 );
+
+					mesh.castShadow = true;
+					mesh.receiveShadow = true;
+
+					scene.add( mesh );
+
+				} );
+			}
+
+			function door()	{
+				loader.load( './examples/models/stl/tekno/datacenter2/door.stl', function ( geometry ) {
+					var material = new THREE.MeshPhongMaterial( { color: 0x654321, specular: 0x101010, shininess: 200 } );
+
+					var meshMaterial = material;
+					if (geometry.hasColors) {
+						meshMaterial = new THREE.MeshPhongMaterial({ opacity: geometry.alpha, vertexColors: THREE.VertexColors });
+					}
+
+					var mesh = new THREE.Mesh( geometry, meshMaterial );
+
+					mesh.position.set( -1.5,-0.535,1.1 );
+					mesh.rotation.set( - Math.PI / 2, 0, 0 );
+					mesh.scale.set( 0.0003,0.0003,0.0003 );
+
+					mesh.castShadow = true;
+					mesh.receiveShadow = true;
+
+					scene.add( mesh );
+
+				} );
+			}
+
+			function doorknob()	{
+				loader.load( './examples/models/stl/tekno/datacenter2/doorknob.stl', function ( geometry ) {
+					var material = new THREE.MeshPhongMaterial( { color: 0xffff00, specular: 0x101010, shininess: 200 } );
+
+					var meshMaterial = material;
+					if (geometry.hasColors) {
+						meshMaterial = new THREE.MeshPhongMaterial({ opacity: geometry.alpha, vertexColors: THREE.VertexColors });
+					}
+
+					var mesh = new THREE.Mesh( geometry, meshMaterial );
+
+					mesh.position.set( -1.5,-0.535,1.1 );
+					mesh.rotation.set( - Math.PI / 2, 0, 0 );
+					mesh.scale.set( 0.0003,0.0003,0.0003 );
+
+					mesh.castShadow = true;
+					mesh.receiveShadow = true;
+
+
+					scene.add( mesh );
+
+				} );
+			}
+
+			function doorglass()	{
+				loader.load( './examples/models/stl/tekno/datacenter2/doorglass.stl', function ( geometry ) {
+					var material = new THREE.MeshPhongMaterial( { color: 0xffffff, specular: 0x101010, shininess: 200, opacity: 0.4, transparent: true } );
+
+					var meshMaterial = material;
+					if (geometry.hasColors) {
+						meshMaterial = new THREE.MeshPhongMaterial({ opacity: geometry.alpha, vertexColors: THREE.VertexColors });
+					}
+
+					var mesh = new THREE.Mesh( geometry, meshMaterial );
+
+					mesh.position.set( -1.5,-0.535,1.1 );
+					mesh.rotation.set( - Math.PI / 2, 0, 0 );
+					mesh.scale.set( 0.0003,0.0003,0.0003 );
+
+					mesh.castShadow = true;
+					mesh.receiveShadow = true;
+
+					scene.add( mesh );
+
+				} );
+			}
+
+			function smoke()	{
+				loader.load( './examples/models/stl/tekno/datacenter2/smoke.stl', function ( geometry ) {
+					var material = new THREE.MeshPhongMaterial( { color: 0xaaaaaa, specular: 0x101010, shininess: 200 } );
+
+					var meshMaterial = material;
+					if (geometry.hasColors) {
+						meshMaterial = new THREE.MeshPhongMaterial({ opacity: geometry.alpha, vertexColors: THREE.VertexColors });
+					}
+
+					var mesh = new THREE.Mesh( geometry, meshMaterial );
+
+					mesh.position.set( -1.5,-0.535,1.1 );
+					mesh.rotation.set( - Math.PI / 2, 0, 0 );
+					mesh.scale.set( 0.0003,0.0003,0.0003 );
+
+					mesh.castShadow = true;
+					mesh.receiveShadow = true;
+
+					scene.add( mesh );
+
+				} );
+			}
+
+			function pipe()	{
+				loader.load( './examples/models/stl/tekno/datacenter2/pipe.stl', function ( geometry ) {
+					var material = new THREE.MeshPhongMaterial( { color: 0xff0000, specular: 0x101010, shininess: 200 } );
+
+					var meshMaterial = material;
+					if (geometry.hasColors) {
+						meshMaterial = new THREE.MeshPhongMaterial({ opacity: geometry.alpha, vertexColors: THREE.VertexColors });
+					}
+
+					var mesh = new THREE.Mesh( geometry, meshMaterial );
+
+					mesh.position.set( -1.5,-0.535,1.1 );
+					mesh.rotation.set( - Math.PI / 2, 0, 0 );
+					mesh.scale.set( 0.0003,0.0003,0.0003 );
+
+					mesh.castShadow = true;
+					mesh.receiveShadow = true;
+
+					scene.add( mesh );
+
+				} );
+			}
+
+			function pipefm200()	{
+				loader.load( './examples/models/stl/tekno/datacenter2/pipefm200.stl', function ( geometry ) {
+					var material = new THREE.MeshPhongMaterial( { color: 0xff0000, specular: 0x101010, shininess: 200 } );
+
+					var meshMaterial = material;
+					if (geometry.hasColors) {
+						meshMaterial = new THREE.MeshPhongMaterial({ opacity: geometry.alpha, vertexColors: THREE.VertexColors });
+					}
+
+					var mesh = new THREE.Mesh( geometry, meshMaterial );
+
+					mesh.position.set( -1.5,-0.535,1.1 );
+					mesh.rotation.set( - Math.PI / 2, 0, 0 );
+					mesh.scale.set( 0.0003,0.0003,0.0003 );
+
+					mesh.castShadow = true;
+					mesh.receiveShadow = true;
+
+					scene.add( mesh );
+
+				} );
+			}
+
+			function genset()	{
+				loader.load( './examples/models/stl/tekno/datacenter2/genset.stl', function ( geometry ) {
+					var material = new THREE.MeshPhongMaterial( { color: 0x000000, specular: 0x111111, shininess: 200 } );
+
+					var meshMaterial = material;
+					if (geometry.hasColors) {
+						meshMaterial = new THREE.MeshPhongMaterial({ opacity: geometry.alpha, vertexColors: THREE.VertexColors });
+					}
+
+					var mesh = new THREE.Mesh( geometry, meshMaterial );
+
+					mesh.position.set( 0.58,-0.5,-1.1 );
+					mesh.rotation.set( 0 , Math.PI / 2, 0 );
+					mesh.scale.set( 0.002,0.002,0.002 );
+
+					mesh.castShadow = true;
+					mesh.receiveShadow = true;
+
+					scene.add( mesh );
+
+				} );
+			}
+
+			function ats()	{
+				loader.load( './examples/models/stl/tekno/datacenter2/ats.stl', function ( geometry ) {
+					var material = new THREE.MeshPhongMaterial( { color: 0x007722, specular: 0x111111, shininess: 200 } );
+
+					var meshMaterial = material;
+					if (geometry.hasColors) {
+						meshMaterial = new THREE.MeshPhongMaterial({ opacity: geometry.alpha, vertexColors: THREE.VertexColors });
+					}
+
+					var mesh = new THREE.Mesh( geometry, meshMaterial );
+
+					mesh.position.set( -1.5,-0.535,1.1 );
+					mesh.rotation.set( - Math.PI / 2, 0, 0 );
+					mesh.scale.set( 0.0003,0.0003,0.0003 );
+
+					mesh.castShadow = true;
+					mesh.receiveShadow = true;
+
+					scene.add( mesh );
+
+				} );
+			}
+
+			function atsframe()	{
+				loader.load( './examples/models/stl/tekno/datacenter2/atsframe.stl', function ( geometry ) {
+					var material = new THREE.MeshPhongMaterial( { color: 0xbbbbbb, specular: 0x111111, shininess: 200 } );
+
+					var meshMaterial = material;
+					if (geometry.hasColors) {
+						meshMaterial = new THREE.MeshPhongMaterial({ opacity: geometry.alpha, vertexColors: THREE.VertexColors });
+					}
+
+					var mesh = new THREE.Mesh( geometry, meshMaterial );
+
+					mesh.position.set( -1.5,-0.535,1.1 );
+					mesh.rotation.set( - Math.PI / 2, 0, 0 );
+					mesh.scale.set( 0.0003,0.0003,0.0003 );
+
+					mesh.castShadow = true;
+					mesh.receiveShadow = true;
+
+					scene.add( mesh );
+
+				} );
+			}
+
+			function atsglass()	{
+				loader.load( './examples/models/stl/tekno/datacenter2/atsglass.stl', function ( geometry ) {
+					var material = new THREE.MeshPhongMaterial( { color: 0xffffff, specular: 0x111111, shininess: 200, opacity: 0.4, transparent: true } );
+
+					var meshMaterial = material;
+					if (geometry.hasColors) {
+						meshMaterial = new THREE.MeshPhongMaterial({ opacity: geometry.alpha, vertexColors: THREE.VertexColors });
+					}
+
+					var mesh = new THREE.Mesh( geometry, meshMaterial );
+
+					mesh.position.set( -1.5,-0.535,1.1 );
+					mesh.rotation.set( - Math.PI / 2, 0, 0 );
+					mesh.scale.set( 0.0003,0.0003,0.0003 );
+
+					mesh.castShadow = true;
+					mesh.receiveShadow = true;
+
+					scene.add( mesh );
+
+				} );
+			}
+
+			function doorframe()	{
+				loader.load( './examples/models/stl/tekno/datacenter2/doorframe.stl', function ( geometry ) {
+					var material = new THREE.MeshPhongMaterial( { color: 0xaaaaaa, specular: 0x101010, shininess: 200 } );
+
+					var meshMaterial = material;
+					if (geometry.hasColors) {
+						meshMaterial = new THREE.MeshPhongMaterial({ opacity: geometry.alpha, vertexColors: THREE.VertexColors });
+					}
+
+					var mesh = new THREE.Mesh( geometry, meshMaterial );
+
+					mesh.position.set( -1.5,-0.535,1.1 );
+					mesh.rotation.set( - Math.PI / 2, 0, 0 );
+					mesh.scale.set( 0.0003,0.0003,0.0003 );
+
+					mesh.castShadow = true;
+					mesh.receiveShadow = true;
+
+					scene.add( mesh );
+
+				} );
+			}
+
+			function doorlist()	{
+				loader.load( './examples/models/stl/tekno/datacenter2/doorlist.stl', function ( geometry ) {
+					var material = new THREE.MeshPhongMaterial( { color: 0xaaaaaa, specular: 0x101010, shininess: 200 } );
+
+					var meshMaterial = material;
+					if (geometry.hasColors) {
+						meshMaterial = new THREE.MeshPhongMaterial({ opacity: geometry.alpha, vertexColors: THREE.VertexColors });
+					}
+
+					var mesh = new THREE.Mesh( geometry, meshMaterial );
+
+					mesh.position.set( -1.5,-0.535,1.1 );
+					mesh.rotation.set( - Math.PI / 2, 0, 0 );
+					mesh.scale.set( 0.0003,0.0003,0.0003 );
+
+					mesh.castShadow = true;
+					mesh.receiveShadow = true;
+
+					scene.add( mesh );
+
+				} );
+			}
+
+			function acpdb1()	{
+				loader.load( './examples/models/stl/tekno/datacenter2/acpdb1.stl', function ( geometry ) {
+					var material = new THREE.MeshPhongMaterial( { color: 0x882222, specular: 0x101010, shininess: 200 } );
+
+					var meshMaterial = material;
+					if (geometry.hasColors) {
+						meshMaterial = new THREE.MeshPhongMaterial({ opacity: geometry.alpha, vertexColors: THREE.VertexColors });
+					}
+
+					var mesh = new THREE.Mesh( geometry, meshMaterial );
+
+					mesh.position.set( -1.5,-0.535,1.1 );
+					mesh.rotation.set( - Math.PI / 2, 0, 0 );
+					mesh.scale.set( 0.0003,0.0003,0.0003 );
+
+					mesh.castShadow = true;
+					mesh.receiveShadow = true;
+
+					scene.add( mesh );
+
+				} );
+			}
+
+			function acpdb2()	{
+				loader.load( './examples/models/stl/tekno/datacenter2/acpdb2.stl', function ( geometry ) {
+					var material = new THREE.MeshPhongMaterial( { color: 0x444499, specular: 0x101010, shininess: 200 } );
+
+					var meshMaterial = material;
+					if (geometry.hasColors) {
+						meshMaterial = new THREE.MeshPhongMaterial({ opacity: geometry.alpha, vertexColors: THREE.VertexColors });
+					}
+
+					var mesh = new THREE.Mesh( geometry, meshMaterial );
+
+					mesh.position.set( -1.5,-0.535,1.1 );
+					mesh.rotation.set( - Math.PI / 2, 0, 0 );
+					mesh.scale.set( 0.0003,0.0003,0.0003 );
+
+					mesh.castShadow = true;
+					mesh.receiveShadow = true;
+
+					scene.add( mesh );
+
+				} );
+			}
+
+			function partition()	{
+				loader.load( './examples/models/stl/tekno/datacenter2/partition.stl', function ( geometry ) {
+					var material = new THREE.MeshPhongMaterial( { color: 0xffffff, specular: 0x101010, shininess: 200 } );
+
+					var meshMaterial = material;
+					if (geometry.hasColors) {
+						meshMaterial = new THREE.MeshPhongMaterial({ opacity: geometry.alpha, vertexColors: THREE.VertexColors });
+					}
+
+					var mesh = new THREE.Mesh( geometry, meshMaterial );
+
+					mesh.position.set( -1.5,-0.535,1.1 );
+					mesh.rotation.set( - Math.PI / 2, 0, 0 );
+					mesh.scale.set( 0.0003,0.0003,0.0003 );
+
+					mesh.castShadow = true;
+					mesh.receiveShadow = true;
+
+					scene.add( mesh );
+
+				} );
+			}
+
+			function foldingdoor()	{
+				loader.load( './examples/models/stl/tekno/datacenter2/foldingdoor.stl', function ( geometry ) {
+					var material = new THREE.MeshPhongMaterial( { color: 0x654321, specular: 0x101010, shininess: 200 } );
+
+					var meshMaterial = material;
+					if (geometry.hasColors) {
+						meshMaterial = new THREE.MeshPhongMaterial({ opacity: geometry.alpha, vertexColors: THREE.VertexColors });
+					}
+
+					var mesh = new THREE.Mesh( geometry, meshMaterial );
+
+					mesh.position.set( -1.5,-0.535,1.1 );
+					mesh.rotation.set( - Math.PI / 2, 0, 0 );
+					mesh.scale.set( 0.0003,0.0003,0.0003 );
+
+					mesh.castShadow = true;
+					mesh.receiveShadow = true;
+
+					scene.add( mesh );
+
+				} );
+			}
+
+			function switchx()	{
+				loader.load( './examples/models/stl/tekno/datacenter2/switch.stl', function ( geometry ) {
+					var material = new THREE.MeshPhongMaterial( { color: 0x888888, specular: 0x101010, shininess: 200 } );
+
+					var meshMaterial = material;
+					if (geometry.hasColors) {
+						meshMaterial = new THREE.MeshPhongMaterial({ opacity: geometry.alpha, vertexColors: THREE.VertexColors });
+					}
+
+					var mesh = new THREE.Mesh( geometry, meshMaterial );
+
+					mesh.position.set( -1.5,-0.535,1.1 );
+					mesh.rotation.set( - Math.PI / 2, 0, 0 );
+					mesh.scale.set( 0.0003,0.0003,0.0003 );
+
+					mesh.castShadow = true;
+					mesh.receiveShadow = true;
+
+					scene.add( mesh );
+
+				} );
+			}
+
+			function abort1()	{
+				loader.load( './examples/models/stl/tekno/datacenter2/abort.stl', function ( geometry ) {
+					var material = new THREE.MeshPhongMaterial( { color: 0x0000ff, specular: 0x101010, shininess: 200 } );
+
+					var meshMaterial = material;
+					if (geometry.hasColors) {
+						meshMaterial = new THREE.MeshPhongMaterial({ opacity: geometry.alpha, vertexColors: THREE.VertexColors });
+					}
+
+					var mesh = new THREE.Mesh( geometry, meshMaterial );
+
+					mesh.position.set( -1.5,-0.535,1.1 );
+					mesh.rotation.set( - Math.PI / 2, 0, 0 );
+					mesh.scale.set( 0.0003,0.0003,0.0003 );
+
+					mesh.castShadow = true;
+					mesh.receiveShadow = true;
+
+					scene.add( mesh );
+
+				} );
+			}
+
+			function release1()	{
+				loader.load( './examples/models/stl/tekno/datacenter2/release.stl', function ( geometry ) {
+					var material = new THREE.MeshPhongMaterial( { color: 0xff0000, specular: 0x101010, shininess: 200 } );
+
+					var meshMaterial = material;
+					if (geometry.hasColors) {
+						meshMaterial = new THREE.MeshPhongMaterial({ opacity: geometry.alpha, vertexColors: THREE.VertexColors });
+					}
+
+					var mesh = new THREE.Mesh( geometry, meshMaterial );
+
+					mesh.position.set( -1.5,-0.535,1.1 );
+					mesh.rotation.set( - Math.PI / 2, 0, 0 );
+					mesh.scale.set( 0.0003,0.0003,0.0003 );
+
+					mesh.castShadow = true;
+					mesh.receiveShadow = true;
+
+					scene.add( mesh );
+
+				} );
+			}
+
+			function controllerx()	{
+				loader.load( './examples/models/stl/tekno/datacenter2/controller.stl', function ( geometry ) {
+					var material = new THREE.MeshPhongMaterial( { color: 0xff0000, specular: 0x101010, shininess: 200 } );
+
+					var meshMaterial = material;
+					if (geometry.hasColors) {
+						meshMaterial = new THREE.MeshPhongMaterial({ opacity: geometry.alpha, vertexColors: THREE.VertexColors });
+					}
+
+					var mesh = new THREE.Mesh( geometry, meshMaterial );
+
+					mesh.position.set( -1.5,-0.535,1.1 );
+					mesh.rotation.set( - Math.PI / 2, 0, 0 );
+					mesh.scale.set( 0.0003,0.0003,0.0003 );
+
+					mesh.castShadow = true;
+					mesh.receiveShadow = true;
+
+					scene.add( mesh );
+
+				} );
+			}
+
+			function siren1()	{
+				loader.load( './examples/models/stl/tekno/datacenter2/siren1.stl', function ( geometry ) {
+					var material = new THREE.MeshPhongMaterial( { color: 0x555555, specular: 0x101010, shininess: 200 } );
+
+					var meshMaterial = material;
+					if (geometry.hasColors) {
+						meshMaterial = new THREE.MeshPhongMaterial({ opacity: geometry.alpha, vertexColors: THREE.VertexColors });
+					}
+
+					var mesh = new THREE.Mesh( geometry, meshMaterial );
+
+					mesh.position.set( -1.5,-0.535,1.1 );
+					mesh.rotation.set( - Math.PI / 2, 0, 0 );
+					mesh.scale.set( 0.0003,0.0003,0.0003 );
+
+					mesh.castShadow = true;
+					mesh.receiveShadow = true;
+
+					scene.add( mesh );
+
+				} );
+			}
+
+			function siren2()	{
+				loader.load( './examples/models/stl/tekno/datacenter2/siren2.stl', function ( geometry ) {
+					var material = new THREE.MeshPhongMaterial( { color: 0xff0000, specular: 0x101010, shininess: 200, opacity: 0.7, transparent: true } );
+
+					var meshMaterial = material;
+					if (geometry.hasColors) {
+						meshMaterial = new THREE.MeshPhongMaterial({ opacity: geometry.alpha, vertexColors: THREE.VertexColors });
+					}
+
+					var mesh = new THREE.Mesh( geometry, meshMaterial );
+
+					mesh.position.set( -1.5,-0.535,1.1 );
+					mesh.rotation.set( - Math.PI / 2, 0, 0 );
+					mesh.scale.set( 0.0003,0.0003,0.0003 );
+
+					mesh.castShadow = true;
+					mesh.receiveShadow = true;
+
+					scene.add( mesh );
+
+				} );
+			}
+
+
+
+
+			function signage()	{
+				loader.load( './examples/models/stl/tekno/datacenter2/signage.stl', function ( geometry ) {
+					var material = new THREE.MeshPhongMaterial( { color: 0x888888, specular: 0x101010, shininess: 200 } );
+
+					var meshMaterial = material;
+					if (geometry.hasColors) {
+						meshMaterial = new THREE.MeshPhongMaterial({ opacity: geometry.alpha, vertexColors: THREE.VertexColors });
+					}
+
+					var mesh = new THREE.Mesh( geometry, meshMaterial );
+
+					mesh.position.set( -1.5,-0.535,1.1 );
+					mesh.rotation.set( - Math.PI / 2, 0, 0 );
+					mesh.scale.set( 0.0003,0.0003,0.0003 );
+
+					mesh.castShadow = true;
+					mesh.receiveShadow = true;
+
+					scene.add( mesh );
+
+				} );
+			}
+
+			function signageback()	{
+				loader.load( './examples/models/stl/tekno/datacenter2/signageback.stl', function ( geometry ) {
+					var material = new THREE.MeshPhongMaterial( { color: 0xff0000, specular: 0x101010, shininess: 200 } );
+
+					var meshMaterial = material;
+					if (geometry.hasColors) {
+						meshMaterial = new THREE.MeshPhongMaterial({ opacity: geometry.alpha, vertexColors: THREE.VertexColors });
+					}
+
+					var mesh = new THREE.Mesh( geometry, meshMaterial );
+
+					mesh.position.set( -1.5,-0.535,1.1 );
+					mesh.rotation.set( - Math.PI / 2, 0, 0 );
+					mesh.scale.set( 0.0003,0.0003,0.0003 );
+
+					mesh.castShadow = true;
+					mesh.receiveShadow = true;
+
+					scene.add( mesh );
+
+				} );
+			}
+
+			function signageglass()	{
+				loader.load( './examples/models/stl/tekno/datacenter2/signageglass.stl', function ( geometry ) {
+					var material = new THREE.MeshPhongMaterial( { color: 0xffffff, specular: 0x101010, shininess: 200, opacity: 0.2, transparent: true } );
+
+					var meshMaterial = material;
+					if (geometry.hasColors) {
+						meshMaterial = new THREE.MeshPhongMaterial({ opacity: geometry.alpha, vertexColors: THREE.VertexColors });
+					}
+
+					var mesh = new THREE.Mesh( geometry, meshMaterial );
+
+					mesh.position.set( -1.5,-0.535,1.1 );
+					mesh.rotation.set( - Math.PI / 2, 0, 0 );
+					mesh.scale.set( 0.0003,0.0003,0.0003 );
+
+					mesh.castShadow = true;
+					mesh.receiveShadow = true;
+
+					scene.add( mesh );
+
+				} );
+			}
+
+			function signageText()	{
+				var loader = new THREE.FontLoader();
+				loader.load( 'fonts/Seven_Segment_Regular.json', function ( font ) {
+
+					var xMid, text;
+
+					var color = 0xffffff;
+
+					var matLite = new THREE.MeshBasicMaterial( {
+						color: color,
+						transparent: true,
+						opacity: 1,
+						side: THREE.DoubleSide
+					} );
+
+					var message = "DO  NOT\n ENTER";
+
+					var shapes = font.generateShapes( message, 0.02 );
+
+					var geometry = new THREE.ShapeBufferGeometry( shapes );
+
+					geometry.computeBoundingBox();
+
+					xMid = - 0.5 * ( geometry.boundingBox.max.x - geometry.boundingBox.min.x );
+
+					geometry.translate( xMid, 0, 0 );
+
+					text = new THREE.Mesh( geometry, matLite );
+					// text.position.z = - 150;
+					text.position.set( -0.75,0.41,0.725 );
+					text.rotation.set( 0, 0 ,0 );
+					scene.add( text );
+
+				} ); //end load function
+			}
+
+
+			function pacText()	{
+				var loader = new THREE.FontLoader();
+				loader.load( 'fonts/helvetiker_regular.typeface.json', function ( font ) {
+
+					var xMid, text;
+
+					var color = 0x000000;
+
+					var matLite = new THREE.MeshBasicMaterial( {
+						color: color,
+						transparent: true,
+						opacity: 0.9,
+						side: THREE.DoubleSide
+					} );
+
+					var message = "Precision Air\nConditioning";
+
+					var shapes = font.generateShapes( message, 0.05 );
+
+					var geometry = new THREE.ShapeBufferGeometry( shapes );
+
+					geometry.computeBoundingBox();
+
+					xMid = - 0.5 * ( geometry.boundingBox.max.x - geometry.boundingBox.min.x );
+
+					geometry.translate( xMid, 0, 0 );
+
+					text = new THREE.Mesh( geometry, matLite );
+					// text.position.z = - 150;
+					text.position.set( -0.95,0.3,-0.03 );
+					text.rotation.set( 0, Math.PI / 2 ,0 );
+					scene.add( text );
+
+				} ); //end load function
+			}
+
+			function gensetText()	{
+				var loader = new THREE.FontLoader();
+				loader.load( 'fonts/helvetiker_regular.typeface.json', function ( font ) {
+
+					var xMid, text;
+
+					var color = 0x000000;
+
+					var matLite = new THREE.MeshBasicMaterial( {
+						color: color,
+						transparent: true,
+						opacity: 0.9,
+						side: THREE.DoubleSide
+					} );
+
+					var message = "Generator";
+
+					var shapes = font.generateShapes( message, 0.05 );
+
+					var geometry = new THREE.ShapeBufferGeometry( shapes );
+
+					geometry.computeBoundingBox();
+
+					xMid = - 0.5 * ( geometry.boundingBox.max.x - geometry.boundingBox.min.x );
+
+					geometry.translate( xMid, 0, 0 );
+
+					text = new THREE.Mesh( geometry, matLite );
+					// text.position.z = - 150;
+					text.position.set( 0.55,-0.1,-1.1 );
+					text.rotation.set( 0, Math.PI / 2 ,0 );
+					scene.add( text );
+
+				} ); //end load function
+			}
+
+			function atsText()	{
+				var loader = new THREE.FontLoader();
+				loader.load( 'fonts/helvetiker_regular.typeface.json', function ( font ) {
+
+					var xMid, text;
+
+					var color = 0x000000;
+
+					var matLite = new THREE.MeshBasicMaterial( {
+						color: color,
+						transparent: true,
+						opacity: 0.9,
+						side: THREE.DoubleSide
+					} );
+
+					var message = "ATS/AMF";
+
+					var shapes = font.generateShapes( message, 0.05 );
+
+					var geometry = new THREE.ShapeBufferGeometry( shapes );
+
+					geometry.computeBoundingBox();
+
+					xMid = - 0.5 * ( geometry.boundingBox.max.x - geometry.boundingBox.min.x );
+
+					geometry.translate( xMid, 0, 0 );
+
+					text = new THREE.Mesh( geometry, matLite );
+					// text.position.z = - 150;
+					text.position.set( 0.3,0.2,-1.05 );
+					text.rotation.set( 0, -Math.PI / 2 ,0 );
+					scene.add( text );
+
+				} ); //end load function
+			}
+
+			function fm200Text()	{
+				var loader = new THREE.FontLoader();
+				loader.load( 'fonts/helvetiker_regular.typeface.json', function ( font ) {
+
+					var xMid, text;
+
+					var color = 0x000000;
+
+					var matLite = new THREE.MeshBasicMaterial( {
+						color: color,
+						transparent: true,
+						opacity: 0.9,
+						side: THREE.DoubleSide
+					} );
+
+					var message = "FM200";
+
+					var shapes = font.generateShapes( message, 0.05 );
+
+					var geometry = new THREE.ShapeBufferGeometry( shapes );
+
+					geometry.computeBoundingBox();
+
+					xMid = - 0.5 * ( geometry.boundingBox.max.x - geometry.boundingBox.min.x );
+
+					geometry.translate( xMid, 0, 0 );
+
+					text = new THREE.Mesh( geometry, matLite );
+					// text.position.z = - 150;
+					text.position.set( 0.6,-0.2,0 );
+					text.rotation.set( 0, Math.PI / 2 ,0 );
+					scene.add( text );
+
+				} ); //end load function
+			}
+
+			function acpdbText()	{
+				var loader = new THREE.FontLoader();
+				loader.load( 'fonts/helvetiker_regular.typeface.json', function ( font ) {
+
+					var xMid, text;
+
+					var color = 0x000000;
+
+					var matLite = new THREE.MeshBasicMaterial( {
+						color: color,
+						transparent: true,
+						opacity: 0.9,
+						side: THREE.DoubleSide
+					} );
+
+					var message = "ACPDB";
+
+					var shapes = font.generateShapes( message, 0.05 );
+
+					var geometry = new THREE.ShapeBufferGeometry( shapes );
+
+					geometry.computeBoundingBox();
+
+					xMid = - 0.5 * ( geometry.boundingBox.max.x - geometry.boundingBox.min.x );
+
+					geometry.translate( xMid, 0, 0 );
+
+					text = new THREE.Mesh( geometry, matLite );
+					// text.position.z = - 150;
+					text.position.set( -0.42,0.3,0.26 );
+					text.rotation.set( 0, 0 ,0 );
+					scene.add( text );
+
+				} ); //end load function
+			}
+
+
+
+			function addShadowedLight( x, y, z, color, intensity ) {
+
+				var directionalLight = new THREE.DirectionalLight( color, intensity );
+				directionalLight.position.set( x, y, z );
+				scene.add( directionalLight );
+
+				directionalLight.castShadow = true;
+
+				var d = 1;
+				directionalLight.shadow.camera.left = -d;
+				directionalLight.shadow.camera.right = d;
+				directionalLight.shadow.camera.top = d;
+				directionalLight.shadow.camera.bottom = -d;
+
+				directionalLight.shadow.camera.near = 1;
+				directionalLight.shadow.camera.far = 4;
+
+				directionalLight.shadow.mapSize.width = 1024;
+				directionalLight.shadow.mapSize.height = 1024;
+
+				directionalLight.shadow.bias = -0.002;
+
+			}
+
+			function onWindowResize() {
+
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+
+				renderer.setSize( window.innerWidth, window.innerHeight );
+
+			}
+
+			function animate() {
+
+				requestAnimationFrame( animate );
+
+				render();
+				stats.update();
+
+			}
+
+			function render() {
+
+				//var timer = Date.now() * 0.0005;
+
+				// camera.position.x = Math.cos( -Math.PI / 3 ) * 3;
+				// camera.position.z = Math.sin( -Math.PI / 3 ) * 3;
+				// camera.position.x = 3;
+				// camera.position.y = 3;
+				// camera.position.z = 3;
+
+
+				camera.lookAt( cameraTarget );
+
+				renderer.render( scene, camera );
+
+			}
+
+		</script>
+	</body>
+</html>

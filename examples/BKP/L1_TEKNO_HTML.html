@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<link href="https://fonts.googleapis.com/css?family=Barlow+Condensed|Barlow+Semi+Condensed" rel="stylesheet">
+		<link href="https://fonts.googleapis.com/css?family=Montserrat" rel="stylesheet">
+		<title>three.js webgl - STL</title>
+		<link rel="stylesheet" href="css/L1_TEKNO_CSS.css">
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	</head>
+	<body>
+		<!--<div id="info">
+			<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> -
+			STL loader test by <a href="https://github.com/aleeper">aleeper</a>. PR2 head from <a href="http://www.ros.org/wiki/pr2_description">www.ros.org</a>
+		</div>-->
+		<!--<div style="width:300px;height:50px;text-align: center; color:white;" class="ui">Info header</div>-->
+
+		<div class="wrapper">
+			<img id="baslogo" src="./files/logobas.png" alt="logo_bas" width="15%" height="auto" align="left" style="padding-left:1%;padding-top:1%;padding-bottom:1%;">
+
+			<div id="vertbar" style="position:absolute;width:0.2%;height:11%;background:#212f39;top:2%;left:18.2%;"></div>
+
+			<button onclick="mainView();" style="top:4%;left:20.5%;font-size:16px;" id="main" class="uix" align="left" font-size="48px">MAIN VIEW</button>
+
+			<button style="top:0;margin-top:0;margin-left:0.25%;margin-right:0.25%" id="1" class="ui"></button>
+			<button style="top:0;margin-top:0;margin-left:0.25%;margin-right:0.25%" id="2" class="ui"></button>
+			<button style="top:0;margin-top:0;margin-left:0.25%;margin-right:0.25%" id="3" class="ui"></button>
+			<button style="top:0;margin-top:0;margin-left:0.25%;margin-right:0.25%" id="4" class="ui"></button>
+			<button style="top:0;margin-top:0;margin-left:0.25%;margin-right:0.25%" id="5" class="ui"></button>
+			<button style="top:0;margin-top:0;margin-left:0.25%;margin-right:0.25%" id="6" class="ui"></button>
+			<button style="top:0;margin-top:0;margin-left:0.25%;margin-right:0.25%" id="7" class="ui"></button>
+			<button style="top:0;margin-top:0;margin-left:0.25%;margin-right:0.25%" id="8" class="ui"></button>
+			<button style="top:0;margin-top:0;margin-left:0.25%;margin-right:0.25%" id="9" class="ui"></button><br>
+
+			<button onclick="tog1a();" style="top:0;margin-top:0;margin-left:0.25%;margin-right:0.25%" id="1a" class="ui">HVAC 1a</button>
+			<button onclick="tog2a();" style="top:0;margin-top:0;margin-left:0.25%;margin-right:0.25%" id="2a" class="ui">HVAC 2a</button>
+			<button onclick="tog3a();" style="top:0;margin-top:0;margin-left:0.25%;margin-right:0.25%" id="3a" class="ui">HVAC 3a</button>
+			<button onclick="tog4a();" style="top:0;margin-top:0;margin-left:0.25%;margin-right:0.25%" id="4a" class="ui">HVAC 4a</button>
+			<button onclick="tog5a();" style="top:0;margin-top:0;margin-left:0.25%;margin-right:0.25%" id="5a" class="ui">HVAC 5a</button>
+			<button onclick="tog6a();" style="top:0;margin-top:0;margin-left:0.25%;margin-right:0.25%" id="6a" class="ui">HVAC 6a</button>
+			<button onclick="tog7a();" style="top:0;margin-top:0;margin-left:0.25%;margin-right:0.25%" id="7a" class="ui">HVAC 7a</button>
+			<button onclick="tog8a();" style="top:0;margin-top:0;margin-left:0.25%;margin-right:0.25%" id="8a" class="ui">HVAC 8a</button>
+			<button onclick="tog9a();" style="top:0;margin-top:0;margin-left:0.25%;margin-right:0.25%" id="9a" class="ui">HVAC 9a</button>
+			<button onclick="tog10a();" style="top:0;margin-top:0;margin-left:0.25%;margin-right:0.25%" id="10a" class="ui">HVAC 10a</button><br>
+
+			<button onclick="tog1b();" style="top:0;margin-top:0;margin-left:0.25%;margin-right:0.25%" id="1b" class="ui">HVAC 1b</button>
+			<button onclick="tog2b();" style="top:0;margin-top:0;margin-left:0.25%;margin-right:0.25%" id="2b" class="ui">HVAC 2b</button><br>
+
+			<button onclick="tog1c();" style="top:0;margin-top:0;margin-left:0.25%;margin-right:0.25%" id="1c" class="ui">HVAC 1c</button>
+			<button onclick="tog2c();" style="top:0;margin-top:0;margin-left:0.25%;margin-right:0.25%" id="2c" class="ui">HVAC 2c</button>
+			<button onclick="tog3c();" style="top:0;margin-top:0;margin-left:0.25%;margin-right:0.25%" id="3c" class="ui">HVAC 3c</button>
+			<button onclick="tog4c();" style="top:0;margin-top:0;margin-left:0.25%;margin-right:0.25%" id="4c" class="ui">HVAC 4c</button>
+			<button onclick="tog5c();" style="top:0;margin-top:0;margin-left:0.25%;margin-right:0.25%" id="5c" class="ui">HVAC 5c</button>
+			<button onclick="tog6c();" style="top:0;margin-top:0;margin-left:0.25%;margin-right:0.25%" id="6c" class="ui">HVAC 6c</button><br>
+		</div>
+
+	    <!-- shapes and ac detail text -->
+		<div id="titlex" class="titleName" style="top:10px;padding-left:30px;font-size:32pt;color:#212f39;">HVAC FLOOR 1</div>
+		<div id="title1" class="titleName" style="top:60px;padding-left:30px;font-size:24pt;color:#3092c0;">FRONT OFFICE</div>
+		<div id="title2" class="titleName" style="top:60px;padding-left:30px;font-size:24pt;color:#3092c0;">BATTERY & TESTING</div>
+		<div id="title3" class="titleName" style="top:60px;padding-left:30px;font-size:24pt;color:#3092c0;">LOADING / UNLOADING</div>
+		<div id="title4" class="titleName" style="top:60px;padding-left:30px;font-size:24pt;color:#3092c0;">CHARGING ROOM</div>
+
+		<div id="text1" class="ACdetails" style="top:170px;padding-left:30px;"></div>
+		<div id="text2" class="ACdetails" style="top:190px;padding-left:30px;"></div>
+		<div id="text3" class="ACdetails" style="top:210px;padding-left:30px;"></div>
+
+		<div id="text4" class="ACdetails" style="top:260px;padding-left:30px;"></div>
+		<div id="text5" class="ACdetails" style="top:280px;padding-left:30px;"></div>
+		<div id="text6" class="ACdetails" style="top:300px;padding-left:30px;"></div>
+
+		<div id="text7" class="ACdetails" style="top:350px;padding-left:30px;"></div>
+		<div id="text8" class="ACdetails" style="top:370px;padding-left:30px;"></div>
+		<div id="text9" class="ACdetails" style="top:390px;padding-left:30px;"></div>
+
+		<div id="text10" class="ACdetails" style="top:440px;padding-left:30px;"></div>
+		<div id="text11" class="ACdetails" style="top:460px;padding-left:30px;"></div>
+		<div id="text12" class="ACdetails" style="top:480px;padding-left:30px;"></div>
+
+		<div id="text13" class="ACdetails" style="top:530px;padding-left:30px;"></div>
+		<div id="text14" class="ACdetails" style="top:550px;padding-left:30px;"></div>
+		<div id="text15" class="ACdetails" style="top:570px;padding-left:30px;"></div>
+
+		<div id="text16" class="ACdetails" style="top:170px;padding-left:175px;"></div>
+		<div id="text17" class="ACdetails" style="top:190px;padding-left:175px;"></div>
+		<div id="text18" class="ACdetails" style="top:210px;padding-left:175px;"></div>
+
+		<div id="text19" class="ACdetails" style="top:260px;padding-left:175px;"></div>
+		<div id="text20" class="ACdetails" style="top:280px;padding-left:175px;"></div>
+		<div id="text21" class="ACdetails" style="top:300px;padding-left:175px;"></div>
+
+		<div id="text22" class="ACdetails" style="top:350px;padding-left:175px;"></div>
+		<div id="text23" class="ACdetails" style="top:370px;padding-left:175px;"></div>
+		<div id="text24" class="ACdetails" style="top:390px;padding-left:175px;"></div>
+
+		<div id="text25" class="ACdetails" style="top:440px;padding-left:175px;"></div>
+		<div id="text26" class="ACdetails" style="top:460px;padding-left:175px;"></div>
+		<div id="text27" class="ACdetails" style="top:480px;padding-left:175px;"></div>
+
+		<div id="text28" class="ACdetails" style="top:530px;padding-left:175px;"></div>
+		<div id="text29" class="ACdetails" style="top:550px;padding-left:175px;"></div>
+		<div id="text30" class="ACdetails" style="top:570px;padding-left:175px;"></div>
+
+		<div id="square" class="square"></div>
+		<!--end of shapes and ac detail text-->
+
+
+		<script src="../build/three.js"></script>
+		<script src="js/loaders/STLLoader.js"></script>
+		<script src="js/OrbitControls.js"></script>
+		<script src="js/Detector.js"></script>
+		<script src="js/libs/stats.min.js"></script>
+		<script src="js/lights/RectAreaLightUniformsLib.js"></script>
+		<script src="js/libs/stats.min.js"></script>
+		<script src="mqtt.js"></script>
+		<script src="js/L1_TEKNO_JS.js"></script>
+
+	</body>
+</html>
